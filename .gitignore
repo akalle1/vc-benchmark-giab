@@ -1,0 +1,29 @@
+# Big genomics files
+*.bam
+*.bam.bai
+*.cram
+*.cram.crai
+*.fastq.gz
+*.fq.gz
+*.vcf.gz
+*.vcf.gz.tbi
+
+# Large dirs (keep code only)
+data/
+results/
+logs/
+giab_truth/
+reference/
+
+# Snakemake metadata
+.snakemake/
+
+# Singularity cache (usually huge)
+.singularity/
+
+# Python
+__pycache__/
+*.pyc
+
+# Misc
+*.tmp

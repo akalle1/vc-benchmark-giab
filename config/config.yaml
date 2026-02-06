@@ -1,0 +1,100 @@
+# Variant Calling Benchmarking Pipeline Configuration
+# Author: Anagha Kalle
+# Date: February 2026
+
+#Project settings
+project_name: "vcbenchmark"
+workdir: "/home/akalle1/scr4_cbradbu3"
+
+#Module (Rockfish specific)
+modules:
+  samtools: "samtools/1.15.1"      # Used for BAM indexing, subsampling, region extraction
+  bcftools: "bcftools/1.15.1"       #Variant calling +VCF manipulation
+  gatk: "gatk/4.2.6.1-Java-11"  ## GATK best-practice style calling (e.g., HaplotypeCaller)
+  singularity: "singularity/3.8.7"
+#Reference data
+reference:
+  genome: "reference/GRCh38.fa"  #FASTA reference used for all tools
+  fai: "reference/GRCh38.fa.fai" #FASTA index(samtools uses this)
+  dict: "reference/GRCh8.dict"  #Sequence dict(GATK dict)
+#look into contig- same reference build
+#GIAB(vcf+tbi+build)
+giab:
+  vcf: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz"
+  vcf_index: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi"
+  bed: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed"
+
+#Input
+##bam + original coverage
+input:
+  bam: "data/HG002_GRCh38_300x.bam" #Start alignement bam
+  original_coverage: 300
+#target coverage -30x, orginal = 300x, downsampled friction = 30/300 = 0.1
+#store the orginal coverage
+##Drives the matrix (regionxcoveragextool)
+#Target regions
+regions:
+  chr21:
+    name: "chr21"
+    bed: "config/chr21.bed"  #look into bed file
+
+  acmg84:
+    name: "acmg84"
+    bed: "config/ACMG84_genes_GRCh38.bed"
+
+#coverage depths to test
+coverage:
+  - 30
+          #drives how many downsampled BAM are created
+#tools to benchmark
+
+tools:
+  - gatk4
+  - bcftools
+  - deepvariant
+
+#tool specific parameters
+gatk4:
+  java_mem: "14g"
+
+bcftools:
+  max_depth: 500 #prevents extreme depth explosion
+  min_MQ: 20 #minimum mapping quality
+#Rationale: Phred Q20 = 1% mapping error rate (99% confidence).
+# Industry standard threshold used by GATK, 1000 Genomes Project.
+# Source: Li et al. 2009 SAM format specification
+  min_BQ: 20 #minimum base quality
+# Rationale: Phred Q20 = 1% base call error (99% confidence).
+# Filters low-quality sequencing calls, reduces false positives.
+
+deepvariant:
+  model_type: "WGS"
+  container: "docker://google/deepvariant:1.6.1"
+#Computational resources (per step resources and compute-cost claims)
+resources:
+  default:
+    partition: "shared"
+    account: "cbradbu3"
+                #partition-which queue; account-allocation
+  downsample:
+    seed: 42
+    fraction: 0.1
+    cpus: 4
+    mem_mb: 8000
+    time_min: 360
+  gatk4:
+    cpus: 4
+    mem_mb: 16000
+    time_min: 1440
+   bcftools:
+     cpus: 4
+     mem_mb: 8000
+     time_min: 720
+   deepvariant:
+     cpus: 8
+     mem_mb: 32000
+     time_min: 2880
+   benchmark:
+     cpus: 4
+     mem_mb: 16000
+     time_min: 240

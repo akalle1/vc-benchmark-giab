@@ -1,0 +1,35 @@
+SOFTWARE VERSIONS - Thesis Pipeline
+====================================
+Date: January 28, 2026
+Cluster: Rockfish @ JHU
+Compute Node: c430
+
+VARIANT CALLERS:
+----------------
+GATK: 4.2.6.1
+bcftools: 1.15.1 (with htslib 1.15.1)
+DeepVariant: 1.6.1 (via Singularity container)
+
+SUPPORTING TOOLS:
+-----------------
+samtools: 1.15.1
+singularity: 3.8.7
+Java: 11.0.2
+
+REFERENCE GENOME:
+-----------------
+GRCh38 (no alt contigs)
+Source: NCBI GCA_000001405.15
+
+GIAB TRUTH SET:
+---------------
+Version: v4.2.1
+Sample: HG002 (Ashkenazi Jewish son)
+Genome: GRCh38
+
+CLUSTER RESOURCES:
+------------------
+Account: cbradbu3
+Allocation: 25,000 core-hours
+Expires: March 31, 2026
+

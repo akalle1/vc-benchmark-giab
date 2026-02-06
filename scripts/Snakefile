@@ -1,0 +1,56 @@
+# Variant Calling Benchmarking Pipeline
+# Author: Anagha Kalle
+# Date: February 2026
+
+import pandas as pd
+from pathlib import Path
+import os
+
+# ==============================================================================
+# CONFIGURATION
+# ==============================================================================
+
+# Load configuration
+configfile: "config/config.yaml"
+
+# Set working directory
+workdir: config["workdir"]
+
+# Load sample information
+samples_df = pd.read_csv("config/samples.tsv", sep="\t")
+
+# Extract unique values
+SAMPLES = samples_df["sample"].unique().tolist()
+COVERAGES = samples_df["coverage"].unique().tolist()
+REGIONS = samples_df["region"].unique().tolist()
+TOOLS = config["tools"]
+
+#helper function
+#get bedfile for the region
+def get_region_bed(wildcards):
+    region_info = config["regions"][wildcards.region]
+    return region_info["bed"]	
+
+
+#contract rule- target workflow
+rule all:
+  input:
+  #Downsampled BAM
+  expand("results/preprocessing/{sample}_{coverage}x_{region}.bam",
+     sample=SAMPLES, coverage=COVERAGE, region=REGIONS),
+  #Variant caller
+  expand("results/{tools}/{sample}_{coverage}x_{region}.vcf.gz",
+     tools=TOOLS, sample=SAMPLES, coverage=COVERAGE, region=REGIONS),
+  #Benchmarking results
+  expand("results/benchmark/{tools}_{sample}_{coverage}x_{region}.summary.csv",
+     tools=TOOLS, sample=SAMPLES, coverage=COVERAGE, region=REGIONS),     
+  #Summary result
+  "results/benchmark_summary.txt"
+
+
+
+#Include (modular pipeline design)
+#splt the files logical files so that that Snakemakefile is readable
+include: "workflow/rules/preprocessing.smk"
+include: "workflow/rules/variant_calling.smk"
+include: "workflow/rules/benchmarking.smk"
