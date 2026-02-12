@@ -3,9 +3,8 @@
 Systematic benchmarking of GATK4, bcftools, and DeepVariant for germline variant calling.
 
 **Author:** Anagha Kalle  
-**Advisor:** Prof. Christopher Bradburne  
 **Institution:** Johns Hopkins University, MS Bioinformatics  
-**Date:** February 2026
+
 
 ---
 
