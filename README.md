@@ -94,4 +94,4 @@ If you use this workflow, please cite:
 
 ## Contact
 
-Questions? Email: akalle1@jhu.edu
+Questions? Email: akalle1@jh.edu
