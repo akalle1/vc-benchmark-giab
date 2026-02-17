@@ -10,8 +10,8 @@ rule downsample_bam:
         bai = temp("results/preprocessing/{sample}_{coverage}x_full.bam.bai")
     params:
         module = config["modules"]["samtools"],
-        seed = config["downsample"]["seed"],
-        frac_digits = config["downsample"]["frac_digits"]
+        seed = config["resources"]["downsample"]["seed"],
+        frac_digits = config["resources"]["downsample"]["fraction"]
     threads: config["resources"]["downsample"]["cpus"]
     log:
         "logs/preprocessing/downsample_{sample}_{coverage}x.log"
@@ -43,12 +43,10 @@ rule extract_region:
     shell:
         r"""
         module load {params.module}
-
-        echo "Extracting regions from BED: {params.region_bed}" > {log}
-
-        samtools view -b -@ {threads} -L {params.region_bed} {input.bam} \
-          > {output.bam} 2>> {log}
-
-        samtools index -@ {threads} {output.bam} 2>> {log}
+        if [ "{params.region_bed}" = "chr21" ]; then
+	    samtools view -b {input.bam} chr21 > {output.bam}
+        else
+            samtools view -b -L {params.region_bed} {input.bam} > {output.bam}
+     	fi
         """
 

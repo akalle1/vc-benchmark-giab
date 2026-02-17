@@ -16,7 +16,7 @@ modules:
 reference:
   genome: "reference/GRCh38.fa"  #FASTA reference used for all tools
   fai: "reference/GRCh38.fa.fai" #FASTA index(samtools uses this)
-  dict: "reference/GRCh8.dict"  #Sequence dict(GATK dict)
+  dict: "reference/GRCh38.dict"  #Sequence dict(GATK dict)
 #look into contig- same reference build
 #GIAB(vcf+tbi+build)
 giab:
@@ -24,10 +24,10 @@ giab:
   vcf_index: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi"
   bed: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed"
 
-#Input
-##bam + original coverage
+#bam + original coverage
 input:
   bam: "data/HG002_GRCh38_300x.bam" #Start alignement bam
+  bam_index: "data/HG002_GRCh38_300x.bam.bai"
   original_coverage: 300
 #target coverage -30x, orginal = 300x, downsampled friction = 30/300 = 0.1
 #store the orginal coverage
@@ -36,16 +36,12 @@ input:
 regions:
   chr21:
     name: "chr21"
-    bed: "config/chr21.bed"  #look into bed file
+    bed: "chr21"  #look into bed file
 
   acmg84:
     name: "acmg84"
     bed: "config/ACMG84_genes_GRCh38.bed"
 
-#coverage depths to test
-coverage:
-  - 30
-          #drives how many downsampled BAM are created
 #tools to benchmark
 
 tools:
@@ -56,6 +52,7 @@ tools:
 #tool specific parameters
 gatk4:
   java_mem: "14g"
+  extra_args: ""
 
 bcftools:
   max_depth: 500 #prevents extreme depth explosion
@@ -75,26 +72,31 @@ resources:
   default:
     partition: "shared"
     account: "cbradbu3"
-                #partition-which queue; account-allocation
+
   downsample:
     seed: 42
     fraction: 0.1
     cpus: 4
     mem_mb: 8000
     time_min: 360
+
   gatk4:
     cpus: 4
     mem_mb: 16000
     time_min: 1440
-   bcftools:
-     cpus: 4
-     mem_mb: 8000
-     time_min: 720
-   deepvariant:
-     cpus: 8
-     mem_mb: 32000
-     time_min: 2880
-   benchmark:
-     cpus: 4
-     mem_mb: 16000
-     time_min: 240
+
+  bcftools:
+    cpus: 4
+    mem_mb: 8000
+    time_min: 720
+
+  deepvariant:
+    cpus: 8
+    mem_mb: 32000
+    time_min: 2880
+
+  benchmark:
+    cpus: 4
+    mem_mb: 16000
+    time_min: 240
+
