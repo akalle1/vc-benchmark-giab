@@ -6,10 +6,6 @@ import pandas as pd
 from pathlib import Path
 import os
 
-# ==============================================================================
-# CONFIGURATION
-# ==============================================================================
-
 # Load configuration
 configfile: "config/config.yaml"
 
