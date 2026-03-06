@@ -23,6 +23,7 @@ giab:
   vcf: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz"
   vcf_index: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi"
   bed: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed"
+  bed_chr21: "giab_truth/HG002_chr21_confidence.bed"
 
 #bam + original coverage
 input:
