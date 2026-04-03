@@ -13,3 +13,5 @@ slurm-*.out
 test_*
 Snakefile_test*
 {log}
+# Singularity cache
+.singularity/
