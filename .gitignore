@@ -15,3 +15,5 @@ Snakefile_test*
 {log}
 # Singularity cache
 .singularity/
+stratifications/GRCh38_alldifficultregions.bed
+stratifications/GRCh38_notinalldifficultregions.bed
