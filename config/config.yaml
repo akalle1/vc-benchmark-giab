@@ -24,6 +24,10 @@ giab:
   vcf_index: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz.tbi"
   bed: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed"
   bed_chr21: "giab_truth/HG002_chr21_confidence.bed"
+  bed_acmg84: "config/acmg84_hg38.bed"
+  bed_acmg84_difficult: "stratifications/acmg84_difficult.bed"
+  bed_acmg84_lowmap_segdup: "stratifications/acmg84_lowmap_segdup.bed"
+  bed_acmg84_easy: "stratifications/acmg84_easy.bed"
 
 #bam + original coverage
 input:
@@ -41,7 +45,20 @@ regions:
 
   acmg84:
     name: "acmg84"
-    bed: "config/ACMG84_genes_GRCh38.bed"
+    bed: "config/acmg84_hg38.bed"
+
+
+  acmg84_difficult:      
+    name: "acmg84_difficult"
+    bed: "stratifications/acmg84_difficult.bed"
+
+  acmg84_lowmap_segdup:
+    name: "acmg84_lowmap_segdup"
+    bed: "stratifications/acmg84_lowmap_segdup.bed"
+  
+  acmg84_easy:
+    name: "acmg84_easy"
+    bed: "stratifications/acmg84_easy.bed"
 
 #tools to benchmark
 
@@ -67,6 +84,9 @@ bcftools:
 
 deepvariant:
   model_type: "WGS"
+  container: "docker://google/deepvariant:1.6.1"
+deepvariant_pacbio:
+  model_type: "PACBIO"
   container: "docker://google/deepvariant:1.6.1"
 #Computational resources (per step resources and compute-cost claims)
 resources:
@@ -101,3 +121,7 @@ resources:
     mem_mb: 16000
     time_min: 240
 
+stratifications:
+  all_difficult: "stratifications/GRCh38_alldifficultregions.bed"
+  lowmap_segdup: "stratifications/GRCh38_alllowmapandsegdupregions.bed"
+  easy_regions:  "stratifications/GRCh38_notinalldifficultregions.bed"

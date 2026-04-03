@@ -21,13 +21,13 @@ rule gatk4_haplotypecaller:
         """
         echo "Starting GATK4 HaplotypeCaller" > {log}
 
-        gatk --java-options "-Xmx{params.java_mem}" HaplotypeCaller \
+        {{ /usr/bin/time -v gatk --java-options "-Xmx{params.java_mem}" HaplotypeCaller \
             -R {input.ref} \
             -I {input.bam} \
             -O {output.vcf} \
             --native-pair-hmm-threads {threads} \
             {params.extra} \
-            2>> {log}
+            2>> {log}; }} 2>{log}.time
 
         echo "GATK4 complete" >> {log}
         """
@@ -50,27 +50,26 @@ rule bcftools_mpileup_call:
     shell:
         """
         echo "Starting bcftools" > {log}
-
-        module load bcftools/1.15.1
-
-        bcftools mpileup \
+        {{ /usr/bin/time -v singularity exec \
+            /data/apps/extern/singularity/samtools.bwa-mem/samtools.bwa-mem.sif \
+            bash -c "bcftools mpileup \
             --threads {threads} \
             --max-depth {params.max_depth} \
             --min-MQ {params.min_MQ} \
             --min-BQ {params.min_BQ} \
             -Ou -f {input.ref} {input.bam} 2>> {log} \
-        | bcftools call \
+            | bcftools call \
             --threads {threads} \
             --ploidy 2 \
             --multiallelic-caller \
             --variants-only \
-            -Oz -o {output.vcf} 2>> {log}
-
-        bcftools index --threads {threads} --tbi {output.vcf} 2>> {log}
-
+            -Oz -o {output.vcf} 2>> {log}"; }} 2> {log}.time
+        singularity exec \
+	    --bind /scratch4/cbradbu3:/scratch4/cbradbu3 \
+            /data/apps/extern/singularity/samtools.bwa-mem/samtools.bwa-mem.sif \
+            bcftools index --threads {threads} --tbi {output.vcf} 2>> {log}
         echo "bcftools complete" >> {log}
         """
-
 rule deepvariant_call:
     input:
         bam = "results/preprocessing/{sample}_{coverage}x_{region}.rg.bam",
@@ -84,37 +83,39 @@ rule deepvariant_call:
     params:
         model_type = config["deepvariant"]["model_type"],
         container = config["deepvariant"]["container"],
-        outdir = lambda wildcards: f"results/deepvariant/tmp_{wildcards.sample}_{wildcards.coverage}x_{wildcards.region}"
+        outdir = lambda wildcards: f"results/deepvariant/tmp_{wildcards.sample}_{wildcards.coverage}x_{wildcards.region}",
+	bam_dir = lambda wildcards, input: os.path.dirname(input.bam),
+        ref_dir = lambda wildcards, input: os.path.dirname(input.ref),
+        bam_base = lambda wildcards, input: os.path.basename(input.bam),
+        ref_base = lambda wildcards, input: os.path.basename(input.ref),
+        vcf_base = lambda wildcards, output: os.path.basename(output.vcf),
+        gvcf_base = lambda wildcards, output: os.path.basename(output.gvcf)
     threads: config["resources"]["deepvariant"]["cpus"]
     envmodules:
         "singularity/3.8.7"
     log:
         "logs/deepvariant/{sample}_{coverage}x_{region}.log"
+
     shell:
         """
         echo "Starting DeepVariant" > {log}
-
         mkdir -p {params.outdir}
-
-        singularity exec \
-            --bind $(dirname {input.bam}):/input:ro \
-            --bind $(dirname {input.ref}):/ref:ro \
-            --bind {params.outdir}:/output \
-            {params.container} \
-            /opt/deepvariant/bin/run_deepvariant \
-            --model_type={params.model_type} \
-            --ref=/ref/$(basename {input.ref}) \
-            --reads=/input/$(basename {input.bam}) \
-            --output_vcf=/output/$(basename {output.vcf}) \
-            --output_gvcf=/output/$(basename {output.gvcf}) \
-            --num_shards={threads} \
-            2>> {log}
-
-        mv {params.outdir}/$(basename {output.vcf}) {output.vcf}
-        mv {params.outdir}/$(basename {output.vcf}).tbi {output.idx}
-        mv {params.outdir}/$(basename {output.gvcf}) {output.gvcf}
-
+        {{ /usr/bin/time -v singularity exec \
+        --bind {params.bam_dir}:/input:ro \
+        --bind {params.ref_dir}:/ref:ro \
+        --bind {params.outdir}:/output \
+        {params.container} \
+        /opt/deepvariant/bin/run_deepvariant \
+        --model_type={params.model_type} \
+        --ref=/ref/{params.ref_base} \
+        --reads=/input/{params.bam_base} \
+        --output_vcf=/output/{params.vcf_base} \
+        --output_gvcf=/output/{params.gvcf_base} \
+        --num_shards={threads} \
+        2>> {log}; }} 2> {log}.time
+        mv {params.outdir}/{params.vcf_base} {output.vcf}
+        mv {params.outdir}/{params.vcf_base}.tbi {output.idx}
+        mv {params.outdir}/{params.gvcf_base} {output.gvcf}
         rm -rf {params.outdir}
-
         echo "DeepVariant complete" >> {log}
         """

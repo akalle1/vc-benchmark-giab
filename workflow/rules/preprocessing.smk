@@ -70,12 +70,15 @@ rule add_readgroup:
     log:
 	"logs/preprocessing/addRG_{sample}_{coverage}x_{region}.log"
     shell:
-        r"""
+        """
+	mkdir -p logs/preprocessing 
         samtools addreplacerg -w \
-          -r '@RG\tID:{wildcards.sample}\tSM:{wildcards.sample}\tPL:ILLUMINA' \
+          -r '@RG\\tID:{wildcards.sample}\\tSM:{wildcards.sample}\\tPL:ILLUMINA' \
           -@ {threads} \
           -o {output.bam} \
-          {input.bam} 2> {log}
+          {input.bam} \
+	   2> logs/preprocessing/addRG_{wildcards.sample}_{wildcards.coverage}x_{wildcards.region}.log
+        samtools index -@ {threads} {output.bam} \
+          2>> logs/preprocessing/addRG_{wildcards.sample}_{wildcards.coverage}x_{wildcards.region}.log
 
-        samtools index -@ {threads} {output.bam} 2>> {log}
         """

@@ -1,15 +1,31 @@
-
 def get_truth_bed(wildcards):
     if wildcards.region == "chr21":
         return config["giab"]["bed_chr21"]
+    elif wildcards.region == "acmg84":
+        return config["giab"]["bed_acmg84"]
+    elif wildcards.region == "acmg84_difficult":
+        return config["giab"]["bed_acmg84_difficult"]
+    elif wildcards.region == "acmg84_lowmap_segdup":
+        return config["giab"]["bed_acmg84_lowmap_segdup"]
+    elif wildcards.region == "acmg84_easy":
+        return config["giab"]["bed_acmg84_easy"]
     else:
         return config["giab"]["bed"]
 
+def get_query_vcf(wildcards):
+    if wildcards.region in ["acmg84_difficult", "acmg84_lowmap_segdup", "acmg84_easy"]:
+        return f"results/{wildcards.tool}/{wildcards.sample}_{wildcards.coverage}x_acmg84.vcf.gz"
+    return f"results/{wildcards.tool}/{wildcards.sample}_{wildcards.coverage}x_{wildcards.region}.vcf.gz"
+
+def get_query_idx(wildcards):
+    if wildcards.region in ["acmg84_difficult", "acmg84_lowmap_segdup", "acmg84_easy"]:
+        return f"results/{wildcards.tool}/{wildcards.sample}_{wildcards.coverage}x_acmg84.vcf.gz.tbi"
+    return f"results/{wildcards.tool}/{wildcards.sample}_{wildcards.coverage}x_{wildcards.region}.vcf.gz.tbi"
 
 rule benchmark_variants:
     input:
-        query_vcf = "results/{tool}/{sample}_{coverage}x_{region}.vcf.gz",
-        query_idx = "results/{tool}/{sample}_{coverage}x_{region}.vcf.gz.tbi",
+        query_vcf = get_query_vcf,
+        query_idx = get_query_idx,
         truth_vcf = config["giab"]["vcf"],
         truth_idx = config["giab"]["vcf_index"],
         truth_bed = get_truth_bed,
@@ -72,12 +88,11 @@ rule aggregate_benchmarks:
         "logs/benchmark/aggregate.log"
     run:
         with open(output.report, 'w') as f:
-            f.write("VARIANT CALLING BENCHMARK SUMMARY\n")  
+            f.write("VARIANT CALLING BENCHMARK SUMMARY\n")
             f.write(f"Tools benchmarked: {', '.join(TOOLS)}\n")
             f.write(f"Sample: {', '.join(SAMPLES)}\n")
             f.write(f"Regions: {', '.join(REGIONS)}\n")
             f.write(f"Total comparisons: {len(input.summaries)}\n\n")
-            
             for summary_file in input.summaries:
                 f.write(f"\n{summary_file}:\n")
                 try:
@@ -88,5 +103,4 @@ rule aggregate_benchmarks:
                             f.write('\n')
                 except Exception as e:
                     f.write(f"Error reading file: {e}\n")
-            
             f.write("END OF SUMMARY\n")
