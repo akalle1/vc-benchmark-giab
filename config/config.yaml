@@ -1,23 +1,20 @@
 # Variant Calling Benchmarking Pipeline Configuration
 # Author: Anagha Kalle
 # Date: February 2026
-
 #Project settings
 project_name: "vcbenchmark"
 workdir: "/home/akalle1/scr4_cbradbu3"
-
 #Module (Rockfish specific)
 modules:
-  samtools: "samtools/1.15.1"      # Used for BAM indexing, subsampling, region extraction
-  bcftools: "bcftools/1.15.1"       #Variant calling +VCF manipulation
-  gatk: "gatk/4.2.6.1-Java-11"  ## GATK best-practice style calling (e.g., HaplotypeCaller)
+  samtools: "samtools/1.15.1"
+  bcftools: "bcftools/1.15.1"
+  gatk: "gatk/4.2.6.1-Java-11"
   singularity: "singularity/3.8.7"
 #Reference data
 reference:
-  genome: "reference/GRCh38.fa"  #FASTA reference used for all tools
-  fai: "reference/GRCh38.fa.fai" #FASTA index(samtools uses this)
-  dict: "reference/GRCh38.dict"  #Sequence dict(GATK dict)
-#look into contig- same reference build
+  genome: "reference/GRCh38.fa"
+  fai: "reference/GRCh38.fa.fai"
+  dict: "reference/GRCh38.dict"
 #GIAB(vcf+tbi+build)
 giab:
   vcf: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark.vcf.gz"
@@ -25,103 +22,88 @@ giab:
   bed: "giab_truth/HG002_GRCh38_1_22_v4.2.1_benchmark_noinconsistent.bed"
   bed_chr21: "giab_truth/HG002_chr21_confidence.bed"
   bed_acmg84: "config/acmg84_hg38.bed"
-  bed_acmg84_difficult: "stratifications/acmg84_difficult.bed"
-  bed_acmg84_lowmap_segdup: "stratifications/acmg84_lowmap_segdup.bed"
-  bed_acmg84_easy: "stratifications/acmg84_easy.bed"
-
+  bed_acmg84_difficult: "stratifications/acmg84_difficult_confident_corrected.bed"
+  bed_acmg84_lowmap_segdup: "stratifications/acmg84_lowmap_segdup_confident.bed"
+  bed_acmg84_easy: "stratifications/acmg84_easy_confident.bed"
 #bam + original coverage
 input:
-  bam: "data/HG002_GRCh38_300x.bam" #Start alignement bam
+  bam: "data/HG002_GRCh38_300x.bam"
   bam_index: "data/HG002_GRCh38_300x.bam.bai"
   original_coverage: 300
-#target coverage -30x, orginal = 300x, downsampled friction = 30/300 = 0.1
-#store the orginal coverage
-##Drives the matrix (regionxcoveragextool)
 #Target regions
 regions:
   chr21:
     name: "chr21"
-    bed: "chr21"  #look into bed file
-
+    bed: "chr21"
   acmg84:
     name: "acmg84"
     bed: "config/acmg84_hg38.bed"
-
-
-  acmg84_difficult:      
+  acmg84_difficult:
     name: "acmg84_difficult"
-    bed: "stratifications/acmg84_difficult.bed"
-
+    bed: "stratifications/acmg84_difficult_confident_corrected.bed"
   acmg84_lowmap_segdup:
     name: "acmg84_lowmap_segdup"
-    bed: "stratifications/acmg84_lowmap_segdup.bed"
-  
+    bed: "stratifications/acmg84_lowmap_segdup_confident.bed"
   acmg84_easy:
     name: "acmg84_easy"
-    bed: "stratifications/acmg84_easy.bed"
-
+    bed: "stratifications/acmg84_easy_confident.bed"
 #tools to benchmark
-
 tools:
   - gatk4
   - bcftools
   - deepvariant
-
+  - deepvariant_hifi
 #tool specific parameters
 gatk4:
   java_mem: "14g"
   extra_args: ""
-
 bcftools:
-  max_depth: 500 #prevents extreme depth explosion
-  min_MQ: 20 #minimum mapping quality
-#Rationale: Phred Q20 = 1% mapping error rate (99% confidence).
-# Industry standard threshold used by GATK, 1000 Genomes Project.
-# Source: Li et al. 2009 SAM format specification
-  min_BQ: 20 #minimum base quality
-# Rationale: Phred Q20 = 1% base call error (99% confidence).
-# Filters low-quality sequencing calls, reduces false positives.
-
+  max_depth: 500
+  min_MQ: 10
+#Rationale: Phred Q10 = 90% mapping confidence (10% misalignment probability).
+#Recommended by Prof. Bradburne for improved sensitivity in complex regions.
+#Previous setting: min_MQ = 20 (Li et al. 2009 industry standard, Phred Q20 = 99% confidence)
+  min_BQ: 20
+#Rationale: Phred Q20 = 1% base call error (99% confidence).
+#Filters low-quality sequencing calls, reduces false positives.
 deepvariant:
   model_type: "WGS"
   container: "docker://google/deepvariant:1.6.1"
 deepvariant_pacbio:
   model_type: "PACBIO"
   container: "docker://google/deepvariant:1.6.1"
-#Computational resources (per step resources and compute-cost claims)
+#Computational resources
 resources:
   default:
     partition: "shared"
     account: "cbradbu3"
-
   downsample:
     seed: 42
     fraction: 0.1
     cpus: 4
     mem_mb: 8000
     time_min: 360
-
   gatk4:
     cpus: 4
     mem_mb: 16000
     time_min: 1440
-
   bcftools:
     cpus: 4
     mem_mb: 8000
     time_min: 720
-
   deepvariant:
     cpus: 8
     mem_mb: 32000
     time_min: 2880
-
+  deepvariant_hifi:
+    cpus: 8
+    mem_mb: 64000
+    time_min: 2880
   benchmark:
     cpus: 4
     mem_mb: 16000
     time_min: 240
-
 stratifications:
-  all_difficult: "stratifications/GRCh38_alldifficultregions.bed"
-  lowmap_segdup: "stratifications/GRCh38_alllowmapandsegdupregions.bed"
-  easy_regions:  "stratifications/GRCh38_notinalldifficultregions.bed"
+  all_difficult: "stratifications/acmg84_difficult_confident_corrected.bed"
+  lowmap_segdup: "stratifications/acmg84_lowmap_segdup_confident.bed"
+  easy_regions:  "stratifications/acmg84_easy_confident.bed"
