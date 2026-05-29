@@ -66,6 +66,7 @@ Resource consumption measured using `/usr/bin/time -v` on Rockfish HPC. Normaliz
 ---
 
 ## Project Structure
+```
 vc-benchmark-giab/
 ├── Snakefile                                      # Main workflow
 ├── config/
@@ -91,6 +92,7 @@ vc-benchmark-giab/
 ├── run_stratifications.sh                         # Stratification benchmarking script
 ├── run_hifi_stratification.sh                     # HiFi stratification benchmarking script
 └── README.md
+```
 
 ---
 
